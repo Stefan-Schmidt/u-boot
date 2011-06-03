@@ -140,6 +140,10 @@
 
 #define CONFIG_NET_MULTI
 
+#define CONFIG_USBD_DFU			1
+#define CONFIG_USBD_DFU_XFER_SIZE 	0x1000
+#define CONFIG_USBD_DFU_INTERFACE	2
+
 /* commands to include */
 #include <config_cmd_default.h>
 
@@ -339,7 +343,7 @@
  */
 #define CONFIG_STACKSIZE	(128 << 10)	/* regular stack 128 KiB */
 #ifdef CONFIG_USE_IRQ
-#define CONFIG_STACKSIZE_IRQ	(4 << 10)	/* IRQ stack 4 KiB */
+#define CONFIG_STACKSIZE_IRQ	(8 << 10)	/* IRQ stack 4 KiB */
 #define CONFIG_STACKSIZE_FIQ	(4 << 10)	/* FIQ stack 4 KiB */
 #endif
 
@@ -390,5 +394,7 @@
 					 GENERATED_GBL_DATA_SIZE)
 
 #define CONFIG_OMAP3_SPI
+
+#define DFU_NUM_ALTERNATES 6
 
 #endif /* __CONFIG_H */
