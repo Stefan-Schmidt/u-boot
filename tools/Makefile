@@ -69,6 +69,7 @@ BIN_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes$(SFX)
 BIN_FILES-y += mkimage$(SFX)
 BIN_FILES-$(CONFIG_NETCONSOLE) += ncb$(SFX)
 BIN_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1$(SFX)
+BIN_FILES-$(CONFIG_USBD_DFU) += mkudfu$(SFX)
 
 # Source files which exist outside the tools directory
 EXT_OBJ_FILES-$(CONFIG_BUILD_ENVCRC) += common/env_embedded.o
@@ -92,6 +93,7 @@ NOPED_OBJ_FILES-y += mkimage.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 NOPED_OBJ_FILES-y += os_support.o
 OBJ_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1.o
+OBJ_FILES-$(CONFIG_USBD_DFU) += mkudfu.o
 
 # Don't build by default
 #ifeq ($(ARCH),ppc)
@@ -195,6 +197,10 @@ $(obj)mkimage$(SFX):	$(obj)crc32.o \
 
 $(obj)mpc86x_clk$(SFX):	$(obj)mpc86x_clk.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
+
+$(obj)mkudfu$(SFX):	$(obj)mkudfu.o
+	$(HOSTCC) $(HOSTCFLAGS) $(HOST_LDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
 $(obj)ncb$(SFX):	$(obj)ncb.o
