@@ -101,9 +101,11 @@ static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 	    (trailer->product != CONFIG_USBD_PRODUCTID_CDCACM &&
 	     trailer->product != CONFIG_USBD_PRODUCTID_GSERIAL))
 		return 0;
+#if 0
 #ifdef CONFIG_REVISION_TAG
 	if (trailer->revision != get_board_rev())
 		return 0;
+#endif
 #endif
 
 	return 1;
