@@ -35,8 +35,6 @@
  * - sanely free resources when another alternate interface is selected
  *
  * Maybe:
- * - add something like uImage or some other header that provides CRC
- *   checking?
  * - make 'dnstate' attached to 'struct usb_device_instance'
  */
 
@@ -74,7 +72,7 @@ volatile enum dfu_state *system_dfu_state; /* for 3rd parties */
 struct dnload_state {
 	nand_info_t *nand;
 	struct part_info *part;
-	unsigned int part_net_size;	/* net sizee (excl. bad blocks) of part */
+	unsigned int part_net_size;	/* net size (excl. bad blocks) of part */
 
 	nand_erase_options_t erase_opts;
 	nand_write_options_t write_opts;
@@ -138,13 +136,13 @@ static struct part_info *get_partition_nand(int idx)
 	return NULL;
 }
 
-#if 0
+#if 1
 static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_state *ds)
 {
 	ds->part = get_partition_nand(dev->alternate - 1);
 	if (!ds->part) {
 		printf("DFU: unable to find partition %u\b", dev->alternate-1);
-   			dev->dfu_state = DFU_STATE_dfuERROR;
+			dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errADDRESS;
 		return RET_STALL;
 	}
@@ -157,7 +155,7 @@ static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_sta
 		ds->buf = malloc(ds->nand->erasesize);
 		if (!ds->buf) {
 			printf("DFU: can't allocate %u bytes\n", ds->nand->erasesize);
-   			dev->dfu_state = DFU_STATE_dfuERROR;
+			dev->dfu_state = DFU_STATE_dfuERROR;
 			dev->dfu_status = DFU_STATUS_errADDRESS;
 			return RET_STALL;
 		}
@@ -212,7 +210,7 @@ static int erase_flash_verify_nand(struct urb *urb, struct dnload_state *ds,
 	rc = nand_erase_opts(ds->nand, &ds->erase_opts);
 	if (rc) {
 		debug("Error erasing\n");
-	    	dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errERASE;
 		return RET_STALL;
 	}
@@ -224,7 +222,7 @@ static int erase_flash_verify_nand(struct urb *urb, struct dnload_state *ds,
 	rc = nand_write_opts(ds->nand, &ds->write_opts);
 	if (rc) {
 		debug("Error writing\n");
-  		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errWRITE;
 		return RET_STALL;
 	}
@@ -249,7 +247,7 @@ static int erase_tail_clean_nand(struct urb *urb, struct dnload_state *ds)
 	rc = nand_erase_opts(ds->nand, &ds->erase_opts);
 	if (rc) {
 		printf("Error erasing tail\n");
-	    	dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errERASE;
 		return RET_STALL;
 	}
@@ -274,7 +272,7 @@ static int read_next_nand(struct urb *urb, struct dnload_state *ds, int len)
 	rc = nand_read_opts(ds->nand, &ds->read_opts);
 	if (rc) {
 		debug("Error reading\n");
-  		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errWRITE;
 		return RET_STALL;
 	}
@@ -330,7 +328,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		/* Too big. Not that we'd really care, but it's a
 		 * DFU protocol violation */
 		debug("length exceeds flash page size ");
-	    	dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errADDRESS;
 		return RET_STALL;
 	}
@@ -400,7 +398,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 	if (urb->actual_length != len) {
 		debug("urb->actual_length(%u) != len(%u) ?!? ",
 			urb->actual_length, len);
-	    	dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_state = DFU_STATE_dfuERROR;
 		dev->dfu_status = DFU_STATUS_errADDRESS;
 		return RET_STALL;
 	}
