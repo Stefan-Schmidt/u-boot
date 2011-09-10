@@ -111,7 +111,6 @@ static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 
 static struct part_info *get_partition_nand(int idx)
 {
-#if 0
 	struct mtd_device *dev;
 	struct part_info *part;
 	struct list_head *pentry;
@@ -132,11 +131,9 @@ static struct part_info *get_partition_nand(int idx)
 		i++;
 	}
 
-#endif
 	return NULL;
 }
 
-#if 1
 static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_state *ds)
 {
 	ds->part = get_partition_nand(dev->alternate - 1);
@@ -281,7 +278,6 @@ static int read_next_nand(struct urb *urb, struct dnload_state *ds, int len)
 
 	return RET_NOTHING;
 }
-#endif
 
 static int get_dfu_loadaddr(uint8_t **loadaddr)
 {
