@@ -590,6 +590,7 @@ static void handle_getstatus(struct urb *urb, int max)
 	switch (dev->dfu_state) {
 	case DFU_STATE_dfuDNLOAD_SYNC:
 	case DFU_STATE_dfuDNBUSY:
+/* FIXME: Leftover from SAM7 developments? */
 #if 0
 		if (fsr & AT91C_MC_PROGE) {
 			debug("errPROG ");
@@ -621,6 +622,8 @@ static void handle_getstatus(struct urb *urb, int max)
 	dstat->bStatus = dev->dfu_status;
 	dstat->bState = dev->dfu_state;
 	dstat->iString = 0;
+	/* FIXME: Use real values from flash subsystem here instead a hardcoded
+	 * value */
 	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
 	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
 	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
