@@ -41,6 +41,8 @@
 #include <config.h>
 #if defined(CONFIG_USBD_DFU)
 
+#define DEBUG
+
 #include <common.h>
 DECLARE_GLOBAL_DATA_PTR;
 
