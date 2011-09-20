@@ -75,8 +75,6 @@ struct dnload_state {
 	unsigned int part_net_size;	/* net size (excl. bad blocks) of part */
 
 	nand_erase_options_t erase_opts;
-	nand_write_options_t write_opts;
-	nand_read_options_t read_opts;
 
 	unsigned char *ptr;	/* pointer to next empty byte in buffer */
 	unsigned int off;	/* offset of current erase page in flash chip */
@@ -161,18 +159,16 @@ static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_sta
 
 	ds->ptr = ds->buf;
 
-	memset(&ds->read_opts, 0, sizeof(ds->read_opts));
-
 	memset(&ds->erase_opts, 0, sizeof(ds->erase_opts));
 	ds->erase_opts.quiet = 1;
 	/* FIXME: do this more dynamic */
 	if (!strcmp(ds->part->name, "rootfs"))
 		ds->erase_opts.jffs2 = 1;
 
-	memset(&ds->write_opts, 0, sizeof(ds->write_opts));
-	ds->write_opts.pad = 1;
-	ds->write_opts.blockalign = 1;
-	ds->write_opts.quiet = 1;
+	// FIXME: How to set these options without write_opts?
+	//ds->write_opts.pad = 1;
+	//ds->write_opts.blockalign = 1;
+	//ds->write_opts.quiet = 1;
 
 	debug("initialize_ds_nand(dev=%p, ds=%p): ", dev, ds);
 	debug("nand=%p, ptr=%p, buf=%p, off=0x%x\n", ds->nand, ds->ptr, ds->buf, ds->off);
@@ -181,7 +177,7 @@ static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_sta
 }
 
 static int erase_flash_verify_nand(struct urb *urb, struct dnload_state *ds,
-				   unsigned long erasesize, unsigned long size)
+				   unsigned long erasesize, size_t size)
 {
 	struct usb_device_instance *dev = urb->device;
 	int rc;
@@ -212,11 +208,9 @@ static int erase_flash_verify_nand(struct urb *urb, struct dnload_state *ds,
 		return RET_STALL;
 	}
 
-	ds->write_opts.buffer = ds->buf;
-	ds->write_opts.length = size;
-	ds->write_opts.offset = ds->off;
 	debug("Writing 0x%x bytes @ offset 0x%x\n", size, ds->off);
-	rc = nand_write_opts(ds->nand, &ds->write_opts);
+	// FIXME handle oob
+	rc = nand_write_skip_bad(ds->nand, ds->off, &size, ds->buf, 0);
 	if (rc) {
 		debug("Error writing\n");
 		dev->dfu_state = DFU_STATE_dfuERROR;
@@ -254,19 +248,14 @@ static int erase_tail_clean_nand(struct urb *urb, struct dnload_state *ds)
 	return RET_NOTHING;
 }
 
-/* Read the next erase blcok from NAND into buffer */
-static int read_next_nand(struct urb *urb, struct dnload_state *ds, int len)
+/* Read the next erase block from NAND into buffer */
+static int read_next_nand(struct urb *urb, struct dnload_state *ds, size_t len)
 {
 	struct usb_device_instance *dev = urb->device;
 	int rc;
 
-	ds->read_opts.buffer = ds->buf;
-	ds->read_opts.length = len;
-	ds->read_opts.offset = ds->off;
-	ds->read_opts.quiet = 1;
-
 	debug("Reading 0x%x@0x%x to 0x%08p\n", len, ds->off, ds->buf);
-	rc = nand_read_opts(ds->nand, &ds->read_opts);
+	rc = nand_read_skip_bad(ds->nand, ds->off, &len, ds->buf);
 	if (rc) {
 		debug("Error reading\n");
 		dev->dfu_state = DFU_STATE_dfuERROR;
@@ -344,11 +333,10 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		switch (dev->alternate) {
 			char buf[12];
 		case 0:
-			sprintf(buf, "%lx", ds->ptr - ds->buf);
+			sprintf(buf, "%x", ds->ptr - ds->buf);
 			setenv("filesize", buf);
 			ds->ptr = ds->buf;
 			break;
-#if 0
 		case 1:
 			if (ds->ptr >
 			    ds->buf + sizeof(struct uboot_dfu_trailer)) {
@@ -370,10 +358,8 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 			ds->nand = NULL;
 			free(ds->buf);
 			ds->ptr = ds->buf = ds->_buf;
-#endif
 			break;
 		default:
-#if 0
 			rc = 0;
 			if (ds->ptr > ds->buf)
 				rc = erase_flash_verify_nand(urb, ds,
@@ -384,7 +370,6 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 				rc = erase_tail_clean_nand(urb, ds);
 
 			ds->nand = NULL;
-#endif
 			break;
 		}
 
@@ -493,10 +478,10 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 {
 	struct usb_device_instance *dev = urb->device;
 	struct dnload_state *ds = &_dnstate;
-	unsigned int remain;
+	//unsigned int remain;
 	uint8_t *loadaddr;
 	unsigned long filesize;
-	int rc;
+	//int rc;
 
 	debug("upload(val=0x%02x, len=%u, first=%u) ", val, len, first);
 

@@ -68,7 +68,7 @@
 #define DFU_STR_ALT(n)		(STR_COUNT+(n)+1)
 #define DFU_STR_COUNT		DFU_STR_ALT(DFU_NUM_ALTERNATES)
 
-#define CONFIG_DFU_CFG_STR	"USB Device Firmware Upgrade"
+#define CONFIG_DFU_CFG_STR	"USB Device Firmware Upgrade (DIRTY)"
 #define CONFIG_DFU_ALT0_STR	"RAM"
 
 struct _dfu_desc {
