@@ -392,8 +392,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 	switch (dev->alternate) {
 	case 0:
 		if (first) {
-			printf("Starting DFU DOWNLOAD to RAM (0x%08p)\n",
-				loadaddr);
+			printf("Starting DFU DOWNLOAD to RAM (0x%p)\n", loadaddr);
 			ds->buf = loadaddr;
 			ds->ptr = ds->buf;
 		}
@@ -504,8 +503,7 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 	switch (dev->alternate) {
 	case 0:
 		if (first) {
-			printf("Starting DFU Upload of RAM (0x%08p)\n",
-				loadaddr);
+			printf("Starting DFU Upload of RAM (0x%p)\n", loadaddr);
 			ds->buf = loadaddr;
 			ds->ptr = ds->buf;
 		}
