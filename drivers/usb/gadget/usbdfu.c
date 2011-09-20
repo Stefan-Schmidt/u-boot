@@ -89,6 +89,29 @@ struct dnload_state {
 
 static struct dnload_state _dnstate;
 
+/* FIXME: Move this to the nand subsystem */
+/* Return the 'net size' of the partition (i.e. excluding any bad blocks) */
+unsigned int nand_net_part_size(struct part_info *part)
+{
+	struct mtd_info *mtd;
+	unsigned int offs;
+	unsigned int bb_delta = 0;
+
+	if (!part || !part->dev || !part->dev->id ||
+		part->dev->id->num >= CONFIG_SYS_MAX_NAND_DEVICE)
+		return 0;
+
+	mtd = &nand_info[part->dev->id->num];
+
+	for (offs = part->offset; offs < part->offset + part->size;
+		offs += mtd->erasesize) {
+		if (nand_isbad_bbt(mtd, offs, 0))
+			bb_delta += mtd->erasesize;
+	}
+
+	return part->size - bb_delta;
+}
+
 static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 {
 	if (trailer->magic != UBOOT_DFU_TRAILER_MAGIC ||
@@ -400,7 +423,6 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		memcpy(ds->ptr, urb->buffer, len);
 		ds->ptr += len;
 		break;
-#if 0
 	case 1:
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
@@ -429,9 +451,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		memcpy(ds->ptr, urb->buffer, len);
 		ds->ptr += len;
 		break;
-#endif
 	default:
-#if 0
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
 			if (rc)
@@ -466,7 +486,6 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 			memcpy(ds->ptr, urb->buffer + actual_len, len - actual_len);
 			ds->ptr += (len - actual_len);
 		}
-#endif
 		break;
 	}
 
@@ -477,10 +496,10 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 {
 	struct usb_device_instance *dev = urb->device;
 	struct dnload_state *ds = &_dnstate;
-	//unsigned int remain;
+	unsigned int remain;
 	uint8_t *loadaddr;
 	unsigned long filesize;
-	//int rc;
+	int rc;
 
 	debug("upload(val=0x%02x, len=%u, first=%u) ", val, len, first);
 
@@ -516,9 +535,6 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		ds->ptr += len;
 		break;
 	default:
-#if 1
-		printf("Rejecting NAND upload.\n");
-#else
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
 			if (rc)
@@ -547,7 +563,6 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 		urb->buffer = ds->buf;
 		urb->actual_length = len;
 		break;
-#endif
 	}
 
 	debug("returning len=%u\n", len);
