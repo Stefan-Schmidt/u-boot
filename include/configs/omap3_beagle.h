@@ -350,6 +350,6 @@
 
 #define CONFIG_OMAP3_SPI
 
-#define DFU_NUM_ALTERNATES 1
+#define DFU_NUM_ALTERNATES 6
 
 #endif /* __CONFIG_H */
