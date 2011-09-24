@@ -176,7 +176,7 @@ static int initialize_ds_nand(struct usb_device_instance *dev, struct dnload_sta
 	memset(&ds->erase_opts, 0, sizeof(ds->erase_opts));
 	ds->erase_opts.quiet = 1;
 	/* FIXME: do this more dynamic */
-	if (!strcmp(ds->part->name, "rootfs"))
+	if ((!strcmp(ds->part->name, "rootfs")) || (!strcmp(ds->part->name, "fs")))
 		ds->erase_opts.jffs2 = 1;
 
 	// FIXME: How to set these options without write_opts?
@@ -378,7 +378,8 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int firs
 							ds->nand->erasesize,
 							ds->nand->erasesize);
 			/* rootfs partition */
-			if (!rc && !strcmp(ds->part->name, "rootfs"))
+			if (!rc && ((!strcmp(ds->part->name, "rootfs"))
+				|| (!strcmp(ds->part->name, "fs"))))
 				rc = erase_tail_clean_nand(urb, ds);
 
 			ds->nand = NULL;
