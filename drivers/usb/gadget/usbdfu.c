@@ -5,6 +5,8 @@
  * based on existing SAM7DFU code from OpenPCD:
  * (C) Copyright 2006 by Harald Welte <hwelte@hmw-consulting.de>
  *
+ * FIXME Add copyright for Bernard?, add my copyright + LF
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -22,25 +24,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
- *
- * TODO:
- * - make NAND support reasonably self-contained and put in apropriate
- *   ifdefs
- * - add some means of synchronization, i.e. block commandline access
- *   while DFU transfer is in progress, and return to commandline once
- *   we're finished
- * - add VERIFY support after writing to flash
- * - sanely free() resources allocated during first uppload/download
- *   request when aborting
- * - sanely free resources when another alternate interface is selected
- *
- * Maybe:
- * - make 'dnstate' attached to 'struct usb_device_instance'
  */
 
 #include <config.h>
 #if defined(CONFIG_USBD_DFU)
 
+// FIXME disbale debug
 #define DEBUG
 
 #include <common.h>
@@ -114,6 +103,7 @@ unsigned int nand_net_part_size(struct part_info *part)
 	return part->size - bb_delta;
 }
 
+//FIXME: Think about if we want to keep this trailer
 static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 {
 	if (trailer->magic != UBOOT_DFU_TRAILER_MAGIC ||
@@ -128,7 +118,6 @@ static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 		return 0;
 #endif
 #endif
-
 	return 1;
 }
 
@@ -299,9 +288,8 @@ static int get_dfu_loadaddr(uint8_t **loadaddr)
 	if ((s = getenv ("loadaddr")) != NULL) {
 		*loadaddr = (uint8_t*)simple_strtoul (s, NULL, 16);
 		return 1;
-	} else {
+	} else
 		return 0;
-	}
 }
 
 static int get_dfu_filesize(unsigned long *filesize)
@@ -310,9 +298,8 @@ static int get_dfu_filesize(unsigned long *filesize)
 	if ((s = getenv ("filesize")) != NULL) {
 		*filesize = simple_strtoul (s, NULL, 16);
 		return 1;
-	} else {
+	} else
 		return 0;
-	}
 }
 
 static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len, int first)
@@ -586,25 +573,11 @@ static void handle_getstatus(struct urb *urb, int max)
 	switch (dev->dfu_state) {
 	case DFU_STATE_dfuDNLOAD_SYNC:
 	case DFU_STATE_dfuDNBUSY:
-/* FIXME: Leftover from SAM7 developments? */
+		debug("DNLOAD_IDLE ");
+		dev->dfu_state = DFU_STATE_dfuDNLOAD_IDLE;
 #if 0
-		if (fsr & AT91C_MC_PROGE) {
-			debug("errPROG ");
-			dev->dfu_status = DFU_STATUS_errPROG;
-			dev->dfu_state = DFU_STATE_dfuERROR;
-		} else if (fsr & AT91C_MC_LOCKE) {
-			debug("errWRITE ");
-			dev->dfu_status = DFU_STATUS_errWRITE;
-			dev->dfu_state = DFU_STATE_dfuERROR;
-		} else if (fsr & AT91C_MC_FRDY) {
-#endif
-			debug("DNLOAD_IDLE ");
-			dev->dfu_state = DFU_STATE_dfuDNLOAD_IDLE;
-#if 0
-		} else {
-			debug("DNBUSY ");
-			dev->dfu_state = DFU_STATE_dfuDNBUSY;
-		}
+		debug("DNBUSY ");
+		dev->dfu_state = DFU_STATE_dfuDNBUSY;
 #endif
 		break;
 	case DFU_STATE_dfuMANIFEST_SYNC:
@@ -957,7 +930,7 @@ static void dfu_init_strings(struct usb_device_instance *dev)
 	}
 }
 
-
+// FIXME: Check if merged, if not drop
 #ifdef CONFIG_NAND_DYNPART
 
 void dfu_update_strings(void)
@@ -988,7 +961,6 @@ void dfu_update_strings(void)
 
 #endif /* CONFIG_NAND_DYNPART */
 
-
 int dfu_init_instance(struct usb_device_instance *dev)
 {
 	int i;
@@ -1002,7 +974,7 @@ int dfu_init_instance(struct usb_device_instance *dev)
 		uif->bAlternateSetting	= i;
 		uif->bInterfaceClass	= 0xfe;
 		uif->bInterfaceSubClass	= 1;
-		uif->bInterfaceProtocol	= 2;
+		uif->bInterfaceProtocol	= 2; // FIXME: Corect number?
 		uif->iInterface		= DFU_STR_ALT(i);
 	}
 
