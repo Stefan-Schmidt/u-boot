@@ -1010,13 +1010,12 @@ int dfu_init_instance(struct usb_device_instance *dev)
 	return 0;
 }
 
-static int stdout_switched;
-
 /* event handler for usb device state events */
 void dfu_event(struct usb_device_instance *device,
 	       usb_device_event_t event, int data)
 {
 	char *out;
+	static int stdout_switched;
 
 	switch (event) {
 	case DEVICE_RESET:
