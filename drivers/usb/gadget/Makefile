@@ -34,6 +34,7 @@ else
 ifdef CONFIG_USB_DEVICE
 COBJS-y += core.o
 COBJS-y += ep0.o
+COBJS-y += dfu_old.o
 COBJS-$(CONFIG_DFU_GADGET) += dfu.o
 COBJS-$(CONFIG_OMAP1510) += omap1510_udc.o
 COBJS-$(CONFIG_OMAP1610) += omap1510_udc.o
