@@ -42,7 +42,7 @@ DECLARE_GLOBAL_DATA_PTR; /* FIXME needed? */
 #include <usbdevice.h>
 #include <usb_dfu.h>
 #include <usb_dfu_descriptors.h>
-#include <usb_dfu_trailer.h>
+//#include <usb_dfu_trailer.h>
 
 #include <nand.h>
 #include <jffs2/load_kernel.h>
@@ -103,6 +103,7 @@ unsigned int nand_net_part_size(struct part_info *part)
 	return part->size - bb_delta;
 }
 
+#if 0
 /* FIXME: Think about if we want to keep this trailer */
 static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 {
@@ -112,14 +113,14 @@ static int dfu_trailer_matching(const struct uboot_dfu_trailer *trailer)
 	    (trailer->product != CONFIG_USBD_PRODUCTID_CDCACM &&
 	     trailer->product != CONFIG_USBD_PRODUCTID_GSERIAL))
 		return 0;
-#if 0
+
 #ifdef CONFIG_REVISION_TAG
 	if (trailer->revision != get_board_rev())
 		return 0;
 #endif
-#endif
 	return 1;
 }
+#endif
 
 static struct part_info *get_partition_nand(int idx)
 {
@@ -359,6 +360,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 			setenv("filesize", buf);
 			ds->ptr = ds->buf;
 			break;
+#if 0
 		case 1:
 			if (ds->ptr >
 			    ds->buf + sizeof(struct uboot_dfu_trailer)) {
@@ -381,6 +383,7 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 			free(ds->buf);
 			ds->ptr = ds->buf = ds->_buf;
 			break;
+#endif
 		default:
 			rc = 0;
 			if (ds->ptr > ds->buf)
