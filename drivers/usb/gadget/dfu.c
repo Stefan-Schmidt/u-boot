@@ -174,9 +174,10 @@ static int config_buf(struct usb_gadget *gadget,
 	/* for now, don't advertise srp-only devices */
 	if (!gadget_is_otg(gadget))
 		function++;
-
+#ifdef CONFIG_USB_ETHER
 	len = usb_gadget_config_buf(&dfu_config,
 			buf, USB_BUFSIZ, function);
+#endif
 	if (len < 0)
 		return len;
 	((struct usb_config_descriptor *) buf)->bDescriptorType = type;
@@ -913,6 +914,7 @@ void register_flash_entities(struct flash_entity *flents, int n)
 	num_flash_ents = n;
 }
 
+#ifdef CONFIG_USB_ETHER
 int __init dfu_init(void)
 {
 	return usb_gadget_register_driver(&dfu_driver);
@@ -924,4 +926,4 @@ void __exit dfu_cleanup(void)
 	usb_gadget_unregister_driver(&dfu_driver);
 }
 module_exit(cleanup);
-
+#endif

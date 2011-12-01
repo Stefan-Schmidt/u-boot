@@ -138,6 +138,9 @@
 #define CONFIG_USB_ETHER_SMSC95XX
 #define CONFIG_USB_ETHER_ASIX
 
+#define CONFIG_DFU_GADGET
+//#define CONFIG_USB_ETHER
+
 
 /* commands to include */
 #include <config_cmd_default.h>
