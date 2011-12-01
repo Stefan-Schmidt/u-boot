@@ -47,6 +47,8 @@
 #include <malloc.h>
 #include "dfu.h"
 
+#define POLL_TIMEOUT_MILLISECONDS 5
+
 static struct flash_entity *flash_ents;
 static int num_flash_ents;
 
@@ -271,9 +273,14 @@ static void handle_getstatus(struct usb_request *req)
 
 	/* send status response */
 	dstat->bStatus = dev->dfu_status;
-	/* FIXME: set dstat->bwPollTimeout */
 	dstat->bState = dev->dfu_state;
 	dstat->iString = 0;
+	/* FIXME: Use real values from flash subsystem here instead a hardcoded
+	 * value */
+	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
+	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
+	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
+	//req->actual = MIN(sizeof(*dstat), max);
 }
 
 static void handle_getstate(struct usb_request *req)
