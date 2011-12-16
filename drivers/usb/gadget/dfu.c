@@ -4,9 +4,17 @@
  * Copyright (C) 2011 Samsung Electronics
  * author: Andrzej Pietrasiewicz <andrzej.p@samsung.com>
  *
+ * Copyright (C) 2011 Stefan Schmidt <stefan@datenfreihafen.org>
+ *
  * Based on gadget zero:
  * Copyright (C) 2003-2007 David Brownell
  * All rights reserved.
+ *
+ * (C) 2007 by OpenMoko, Inc.
+ * Author: Harald Welte <laforge@openmoko.org>
+ *
+ * based on existing SAM7DFU code from OpenPCD:
+ * (C) Copyright 2006 by Harald Welte <hwelte@hmw-consulting.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -335,18 +343,22 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	u16 len = le16_to_cpu(ctrl->wLength);
 	int rc = 0;
 
+// u_int16_t len = urb->device_request.wLength;
+// handle_getstatus(urb, len);
+
 	switch (dev->dfu_state) {
 	case DFU_STATE_appIDLE:
 		switch (ctrl->bRequest) {
 		case USB_REQ_DFU_GETSTATUS:
 			handle_getstatus(req);
+			//break;
 			return RET_STAT_LEN;
 		case USB_REQ_DFU_GETSTATE:
 			handle_getstate(req);
 			break;
 		case USB_REQ_DFU_DETACH:
 			dev->dfu_state = DFU_STATE_appDETACH;
-			dev->dfu_state = DFU_STATE_dfuIDLE;
+			dev->dfu_state = DFU_STATE_dfuIDLE; // Why?
 			return RET_ZLP;
 		default:
 			return RET_STALL;
@@ -356,6 +368,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		switch (ctrl->bRequest) {
 		case USB_REQ_DFU_GETSTATUS:
 			handle_getstatus(req);
+			// break;
 			return RET_STAT_LEN;
 		case USB_REQ_DFU_GETSTATE:
 			handle_getstate(req);
@@ -374,16 +387,18 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 				return RET_STALL;
 			}
 			dev->dfu_state = DFU_STATE_dfuDNLOAD_SYNC;
+			// ret = handle_dnload(urb, val, len, 1);
 			return handle_dnload(gadget, len);
 		case USB_REQ_DFU_UPLOAD:
 			dev->dfu_state = DFU_STATE_dfuUPLOAD_IDLE;
+			// handle_upload(urb, val, len, 1);
 			return handle_upload(req, len);
 		case USB_REQ_DFU_ABORT:
 			/* no zlp? */
 			return RET_ZLP;
 		case USB_REQ_DFU_GETSTATUS:
 			handle_getstatus(req);
-			return RET_STAT_LEN;
+			return RET_STAT_LEN; // Why?
 		case USB_REQ_DFU_GETSTATE:
 			handle_getstate(req);
 			break;
@@ -396,7 +411,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			 * resets in a row :(
 			 */
 			dev->dfu_state = DFU_STATE_dfuMANIFEST_WAIT_RST;
-			dev->dfu_state = DFU_STATE_appIDLE;
+			dev->dfu_state = DFU_STATE_appIDLE; // Why?
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
@@ -407,7 +422,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		switch (ctrl->bRequest) {
 		case USB_REQ_DFU_GETSTATUS:
 			handle_getstatus(req);
-			return RET_STAT_LEN;
+			return RET_STAT_LEN; // Why?
 			/* FIXME: state transition depending
 			 * on block completeness */
 		case USB_REQ_DFU_GETSTATE:
@@ -424,7 +439,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			/* FIXME: only accept getstatus if bwPollTimeout
 			 * has elapsed */
 			handle_getstatus(req);
-			return RET_STAT_LEN;
+			return RET_STAT_LEN; // Why?
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
 			return RET_STALL;
@@ -517,6 +532,24 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	}
 
 	return 0;
+#if 0
+out:
+	debug("new_state = %u, ret = %u\n", dev->dfu_state, ret);
+
+	switch (ret) {
+	case RET_ZLP:
+		urb->actual_length = 0;
+		return DFU_EP0_ZLP;
+		break;
+	case RET_STALL:
+		return DFU_EP0_STALL;
+		break;
+	case RET_NOTHING:
+		break;
+	}
+
+	return DFU_EP0_DATA;
+#endif
 }
 
 static int
@@ -926,4 +959,203 @@ void __exit dfu_cleanup(void)
 	usb_gadget_unregister_driver(&dfu_driver);
 }
 module_exit(cleanup);
+#endif
+
+
+/*------------------ Move into NAND backend ---------------------------------*/
+#if 0
+#include <nand.h>
+#include <jffs2/load_kernel.h>
+int mtdparts_init(void);
+extern struct list_head devices;
+
+/* Return the 'net size' of the partition (i.e. excluding any bad blocks) */
+unsigned int nand_net_part_size(struct part_info *part)
+{
+	struct mtd_info *mtd;
+	unsigned int offs;
+	unsigned int bb_delta = 0;
+
+	if (!part || !part->dev || !part->dev->id ||
+		part->dev->id->num >= CONFIG_SYS_MAX_NAND_DEVICE)
+		return 0;
+
+	mtd = &nand_info[part->dev->id->num];
+
+	for (offs = part->offset; offs < part->offset + part->size;
+		offs += mtd->erasesize) {
+		if (nand_isbad_bbt(mtd, offs, 0))
+			bb_delta += mtd->erasesize;
+	}
+
+	return part->size - bb_delta;
+}
+
+static struct part_info *get_partition_nand(int idx)
+{
+	struct mtd_device *dev;
+	struct part_info *part;
+	struct list_head *pentry;
+	int i;
+
+	if (mtdparts_init())
+		return NULL;
+	if (list_empty(&devices))
+		return NULL;
+
+	dev = list_entry(devices.next, struct mtd_device, link);
+	i = 0;
+	list_for_each(pentry, &dev->parts) {
+		if (i == idx)  {
+			part = list_entry(pentry, struct part_info, link);
+			return part;
+		}
+		i++;
+	}
+
+	return NULL;
+}
+
+static int initialize_ds_nand(struct usb_device_instance *dev,
+			      struct dnload_state *ds)
+{
+	ds->part = get_partition_nand(dev->alternate - 1);
+	if (!ds->part) {
+		printf("DFU: unable to find partition %u\b", dev->alternate-1);
+			dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_status = DFU_STATUS_errADDRESS;
+		return RET_STALL;
+	}
+	ds->nand = &nand_info[ds->part->dev->id->num];
+	ds->off = ds->part->offset;
+	ds->part_net_size = nand_net_part_size(ds->part);
+
+	if (ds->nand->erasesize > sizeof(ds->_buf)) {
+		printf("Warning - NAND ERASESIZE bigger than static buffer\n");
+		ds->buf = malloc(ds->nand->erasesize);
+		if (!ds->buf) {
+			printf("DFU: can't allocate %u bytes\n",
+				ds->nand->erasesize);
+			dev->dfu_state = DFU_STATE_dfuERROR;
+			dev->dfu_status = DFU_STATUS_errADDRESS;
+			return RET_STALL;
+		}
+	} else
+		ds->buf = ds->_buf;
+
+	ds->ptr = ds->buf;
+
+	memset(&ds->erase_opts, 0, sizeof(ds->erase_opts));
+	ds->erase_opts.quiet = 1;
+	/* FIXME: do this more dynamic */
+	if ((!strcmp(ds->part->name, "rootfs")) ||
+	    (!strcmp(ds->part->name, "fs")))
+		ds->erase_opts.jffs2 = 1;
+
+	/* FIXME: How to set these options without write_opts?
+	 * ds->write_opts.pad = 1;
+	 * ds->write_opts.blockalign = 1;
+	 * ds->write_opts.quiet = 1;
+	*/
+
+	debug("initialize_ds_nand(dev=%p, ds=%p): ", dev, ds);
+	debug("nand=%p, ptr=%p, buf=%p, off=0x%x\n", ds->nand, ds->ptr,
+						     ds->buf, ds->off);
+
+	return RET_NOTHING;
+}
+
+static int erase_flash_verify_nand(struct urb *urb, struct dnload_state *ds,
+				   unsigned long erasesize, size_t size)
+{
+	struct usb_device_instance *dev = urb->device;
+	int rc;
+
+	debug("erase_flash_verify_nand(urb=%p, ds=%p, erase=0x%lx size=0x%x)\n",
+		urb, ds, erasesize, size);
+
+	if (erasesize == ds->nand->erasesize) {
+		/* we're only writing a single block and need to
+		 * do bad block skipping / offset adjustments our own */
+		while (ds->nand->block_isbad(ds->nand, ds->off)) {
+			debug("SKIP_ONE_BLOCK(0x%08x)!!\n", ds->off);
+			ds->off += ds->nand->erasesize;
+		}
+	}
+
+	/* we have finished one eraseblock, flash it */
+	ds->erase_opts.offset = ds->off;
+	ds->erase_opts.length = erasesize;
+	debug("Erasing 0x%x bytes @ offset 0x%x (jffs=%u)\n",
+		(unsigned int)ds->erase_opts.length,
+		(unsigned int)ds->erase_opts.offset,
+		ds->erase_opts.jffs2);
+	rc = nand_erase_opts(ds->nand, &ds->erase_opts);
+	if (rc) {
+		debug("Error erasing\n");
+		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_status = DFU_STATUS_errERASE;
+		return RET_STALL;
+	}
+
+	debug("Writing 0x%x bytes @ offset 0x%x\n", size, ds->off);
+	/* FIXME handle oob */
+	rc = nand_write_skip_bad(ds->nand, ds->off, &size, ds->buf, 0);
+	if (rc) {
+		debug("Error writing\n");
+		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_status = DFU_STATUS_errWRITE;
+		return RET_STALL;
+	}
+
+	ds->off += size;
+	ds->ptr = ds->buf;
+
+	/* FIXME: implement verify! */
+	return RET_NOTHING;
+}
+
+static int erase_tail_clean_nand(struct urb *urb, struct dnload_state *ds)
+{
+	struct usb_device_instance *dev = urb->device;
+	int rc;
+
+	ds->erase_opts.offset = ds->off;
+	ds->erase_opts.length = ds->part->size - (ds->off - ds->part->offset);
+	debug("Erasing tail of 0x%x bytes @ offset 0x%x (jffs=%u)\n",
+		(unsigned int)ds->erase_opts.length,
+		(unsigned int)ds->erase_opts.offset,
+		ds->erase_opts.jffs2);
+	rc = nand_erase_opts(ds->nand, &ds->erase_opts);
+	if (rc) {
+		printf("Error erasing tail\n");
+		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_status = DFU_STATUS_errERASE;
+		return RET_STALL;
+	}
+
+	ds->off += ds->erase_opts.length; /* for consistency */
+
+	return RET_NOTHING;
+}
+
+/* Read the next erase block from NAND into buffer */
+static int read_next_nand(struct urb *urb, struct dnload_state *ds, size_t len)
+{
+	struct usb_device_instance *dev = urb->device;
+	int rc;
+
+	debug("Reading 0x%x@0x%x to 0x%p\n", len, ds->off, ds->buf);
+	rc = nand_read_skip_bad(ds->nand, ds->off, &len, ds->buf);
+	if (rc) {
+		debug("Error reading\n");
+		dev->dfu_state = DFU_STATE_dfuERROR;
+		dev->dfu_status = DFU_STATUS_errWRITE;
+		return RET_STALL;
+	}
+	ds->off += len;
+	ds->ptr = ds->buf;
+
+	return RET_NOTHING;
+}
 #endif
