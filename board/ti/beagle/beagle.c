@@ -528,3 +528,19 @@ U_BOOT_CMD(
 	"Return the status of the BeagleBoard USER button",
 	""
 );
+
+
+void board_dfu_init(void)
+{
+   //register_flash_areas();
+   //s3c_udc_probe(&s5pc110_otg_data);
+}
+
+void board_dfu_cleanup(void)
+{
+   //unregister_flash_areas();
+}
+
+void dfu_init(void) {}
+void dfu_cleanup(void){}
+void usb_gadget_handle_interrupts(void){}
