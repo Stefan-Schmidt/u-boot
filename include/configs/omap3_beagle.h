@@ -146,7 +146,7 @@
 #define CONFIG_USBD_DFU_XFER_SIZE      0x1000
 #define CONFIG_USBD_DFU_INTERFACE      2
 
-#define DFU_NUM_ALTERNATES 1
+#define DFU_NUM_ALTERNATES 6
 
 
 /* commands to include */
