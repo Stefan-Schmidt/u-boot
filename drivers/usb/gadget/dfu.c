@@ -4,7 +4,7 @@
  * Copyright (C) 2011 Samsung Electronics
  * author: Andrzej Pietrasiewicz <andrzej.p@samsung.com>
  *
- * Copyright (C) 2011 Stefan Schmidt <stefan@datenfreihafen.org>
+ * Copyright (C) 2011-2012 Stefan Schmidt <stefan@datenfreihafen.org>
  *
  * Based on gadget zero:
  * Copyright (C) 2003-2007 David Brownell
@@ -93,7 +93,7 @@ static struct usb_otg_descriptor otg_descriptor = {
 static const struct dfu_function_descriptor dfu_func = {
 	.bLength =		sizeof dfu_func,
 	.bDescriptorType =	DFU_DT_FUNC,
-	.bmAttributes =		DFU_BIT_WILL_DETACH |
+	.bmAttributes =		DFU_BIT_WILL_DETACH | /*FIXME */
 				DFU_BIT_MANIFESTATION_TOLERANT |
 				DFU_BIT_CAN_UPLOAD |
 				DFU_BIT_CAN_DNLOAD,
@@ -132,7 +132,7 @@ static const char longname[] = "DFU Gadget";
 /* default serial number takes at least two packets */
 static const char serial[] = "0123456789.0123456789.012345678";
 static const char dfu_name[] = "Device Firmware Upgrade";
-static const char shortname[] = "dfu";
+static const char shortname[] = "DFU";
 
 /* static strings, in UTF-8 */
 static struct usb_string strings_runtime[] = {
