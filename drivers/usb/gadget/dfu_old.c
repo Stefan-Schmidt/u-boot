@@ -41,57 +41,22 @@ DECLARE_GLOBAL_DATA_PTR; /* FIXME needed? */
 #include <usb_dfu.h>
 #include <usb_dfu_descriptors.h>
 
-/* FIXME Still needed for nand in dnload_state */
-#include <nand.h>
+#include <flash_entity.h>
 
 #include "../../serial/usbtty.h"			/* for STR_* defs */
 
 #define POLL_TIMEOUT_MILLISECONDS 5
 
-
-struct dnload_state {
-	nand_info_t *nand;
-	struct part_info *part;
-	unsigned int part_net_size;	/* net size (no bad blocks) of part */
-
-	nand_erase_options_t erase_opts;
-
-	unsigned char *ptr;	/* pointer to next empty byte in buffer */
-	unsigned int off;	/* offset of current erase page in flash chip */
-	unsigned char *buf;	/* pointer to allocated erase page buffer */
-
-	/* unless doing an atomic transfer, we use the static buffer below.
-	 * This saves us from having to clean up dynamic allications in the
-	 * various error paths of the code.  Also, it will always work, no
-	 * matter what the memory situation is. */
-	unsigned char _buf[0x20000];	/* FIXME: depends flash page size */
-};
-
-static struct dnload_state _dnstate;
+static struct flash_entity *flash_ents;
+static int num_flash_ents;
 
 /* HACK to include nand backend code for now */
 #include "../dfu/nand.c"
 
-static int get_dfu_loadaddr(uint8_t **loadaddr)
+void register_flash_entities2(struct flash_entity *flents, int n)
 {
-	const char *s;
-	s = getenv("loadaddr");
-	if (s != NULL) {
-		*loadaddr = (uint8_t *)simple_strtoul(s, NULL, 16);
-		return 1;
-	} else
-		return 0;
-}
-
-static int get_dfu_filesize(unsigned long *filesize)
-{
-	const char *s;
-	s = getenv("filesize");
-	if (s != NULL) {
-		*filesize = simple_strtoul(s, NULL, 16);
-		return 1;
-	} else
-		return 0;
+	flash_ents = flents;
+	num_flash_ents = n;
 }
 
 static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
@@ -339,8 +304,6 @@ static void handle_getstatus(struct urb *urb, int max)
 	struct usb_device_instance *dev = urb->device;
 	struct dfu_status *dstat = (struct dfu_status *) urb->buffer;
 
-	debug("getstatus ");
-
 	if (!urb->buffer || urb->buffer_length < sizeof(*dstat)) {
 		debug("invalid urb! ");
 		return;
@@ -351,10 +314,6 @@ static void handle_getstatus(struct urb *urb, int max)
 	case DFU_STATE_dfuDNBUSY:
 		debug("DNLOAD_IDLE ");
 		dev->dfu_state = DFU_STATE_dfuDNLOAD_IDLE;
-#if 0
-		debug("DNBUSY ");
-		dev->dfu_state = DFU_STATE_dfuDNBUSY;
-#endif
 		break;
 	case DFU_STATE_dfuMANIFEST_SYNC:
 		break;
@@ -380,8 +339,6 @@ static void handle_getstatus(struct urb *urb, int max)
 
 static void handle_getstate(struct urb *urb, int max)
 {
-	debug("getstate ");
-
 	if (!urb->buffer || urb->buffer_length < sizeof(u_int8_t)) {
 		debug("invalid urb! ");
 		return;

@@ -1,7 +1,30 @@
+#include <common.h>
 #include <nand.h>
 #include <jffs2/load_kernel.h>
+#include <dfu_backend.h>
+#include <flash_entity.h>
 int mtdparts_init(void);
 extern struct list_head devices;
+
+struct dnload_state {
+	nand_info_t *nand;
+	struct part_info *part;
+	unsigned int part_net_size;	/* net size (no bad blocks) of part */
+
+	nand_erase_options_t erase_opts;
+
+	unsigned char *ptr;	/* pointer to next empty byte in buffer */
+	unsigned int off;	/* offset of current erase page in flash chip */
+	unsigned char *buf;	/* pointer to allocated erase page buffer */
+
+	/* unless doing an atomic transfer, we use the static buffer below.
+	 * This saves us from having to clean up dynamic allications in the
+	 * various error paths of the code.  Also, it will always work, no
+	 * matter what the memory situation is. */
+	unsigned char _buf[0x20000];	/* FIXME: depends flash page size */
+};
+
+static struct dnload_state _dnstate;
 
 /* Return the 'net size' of the partition (i.e. excluding any bad blocks) */
 unsigned int nand_net_part_size(struct part_info *part)
@@ -191,4 +214,26 @@ static int read_next_nand(struct urb *urb, struct dnload_state *ds, size_t len)
 	ds->ptr = ds->buf;
 
 	return RET_NOTHING;
+}
+
+static int get_dfu_loadaddr(uint8_t **loadaddr)
+{
+	const char *s;
+	s = getenv("loadaddr");
+	if (s != NULL) {
+		*loadaddr = (uint8_t *)simple_strtoul(s, NULL, 16);
+		return 1;
+	} else
+		return 0;
+}
+
+static int get_dfu_filesize(unsigned long *filesize)
+{
+	const char *s;
+	s = getenv("filesize");
+	if (s != NULL) {
+		*filesize = simple_strtoul(s, NULL, 16);
+		return 1;
+	} else
+		return 0;
 }
