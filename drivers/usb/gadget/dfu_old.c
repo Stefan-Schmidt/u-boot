@@ -150,34 +150,6 @@ static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 		memcpy(ds->ptr, urb->buffer, len);
 		ds->ptr += len;
 		break;
-	case 1:
-		if (first) {
-			rc = initialize_ds_nand(dev, ds);
-			if (rc)
-				return rc;
-			ds->buf = malloc(ds->part_net_size);
-			if (!ds->buf) {
-				printf("No memory for atomic buffer!!\n");
-				dev->dfu_state = DFU_STATE_dfuERROR;
-				dev->dfu_status = DFU_STATUS_errUNKNOWN;
-				return RET_STALL;
-			}
-			ds->ptr = ds->buf;
-			printf("Starting Atomic DFU DOWNLOAD to partition %s\n",
-				ds->part->name);
-		}
-
-		remain_len = (ds->buf + ds->part_net_size) - ds->ptr;
-		if (remain_len < len) {
-			len = remain_len;
-			printf("End of write exceeds partition end\n");
-			dev->dfu_state = DFU_STATE_dfuERROR;
-			dev->dfu_status = DFU_STATUS_errADDRESS;
-			return RET_STALL;
-		}
-		memcpy(ds->ptr, urb->buffer, len);
-		ds->ptr += len;
-		break;
 	default:
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
