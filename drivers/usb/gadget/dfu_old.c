@@ -59,6 +59,55 @@ void register_flash_entities2(struct flash_entity *flents, int n)
 	num_flash_ents = n;
 }
 
+static void handle_getstatus(struct urb *urb, int max)
+{
+	struct usb_device_instance *dev = urb->device;
+	struct dfu_status *dstat = (struct dfu_status *) urb->buffer;
+
+	if (!urb->buffer || urb->buffer_length < sizeof(*dstat)) {
+		debug("invalid urb! ");
+		return;
+	}
+
+	switch (dev->dfu_state) {
+	case DFU_STATE_dfuDNLOAD_SYNC:
+	case DFU_STATE_dfuDNBUSY:
+		debug("DNLOAD_IDLE ");
+		dev->dfu_state = DFU_STATE_dfuDNLOAD_IDLE;
+		break;
+	case DFU_STATE_dfuMANIFEST_SYNC:
+		break;
+	default:
+		/* return; */
+		break;
+	}
+
+	/* send status response */
+	dstat->bStatus = dev->dfu_status;
+	dstat->bState = dev->dfu_state;
+	dstat->iString = 0;
+	/* FIXME: Use real values from flash subsystem here instead a hardcoded
+	 * value */
+	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
+	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
+	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
+	urb->actual_length = MIN(sizeof(*dstat), max);
+
+	/* we don't need to explicitly send data here, will
+	 * be done by the original caller! */
+}
+
+static void handle_getstate(struct urb *urb, int max)
+{
+	if (!urb->buffer || urb->buffer_length < sizeof(u_int8_t)) {
+		debug("invalid urb! ");
+		return;
+	}
+
+	urb->buffer[0] = urb->device->dfu_state & 0xff;
+	urb->actual_length = sizeof(u_int8_t);
+}
+
 static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 			 int first)
 {
@@ -269,55 +318,6 @@ static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 
 	debug("returning len=%u\n", len);
 	return len;
-}
-
-static void handle_getstatus(struct urb *urb, int max)
-{
-	struct usb_device_instance *dev = urb->device;
-	struct dfu_status *dstat = (struct dfu_status *) urb->buffer;
-
-	if (!urb->buffer || urb->buffer_length < sizeof(*dstat)) {
-		debug("invalid urb! ");
-		return;
-	}
-
-	switch (dev->dfu_state) {
-	case DFU_STATE_dfuDNLOAD_SYNC:
-	case DFU_STATE_dfuDNBUSY:
-		debug("DNLOAD_IDLE ");
-		dev->dfu_state = DFU_STATE_dfuDNLOAD_IDLE;
-		break;
-	case DFU_STATE_dfuMANIFEST_SYNC:
-		break;
-	default:
-		/* return; */
-		break;
-	}
-
-	/* send status response */
-	dstat->bStatus = dev->dfu_status;
-	dstat->bState = dev->dfu_state;
-	dstat->iString = 0;
-	/* FIXME: Use real values from flash subsystem here instead a hardcoded
-	 * value */
-	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
-	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
-	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
-	urb->actual_length = MIN(sizeof(*dstat), max);
-
-	/* we don't need to explicitly send data here, will
-	 * be done by the original caller! */
-}
-
-static void handle_getstate(struct urb *urb, int max)
-{
-	if (!urb->buffer || urb->buffer_length < sizeof(u_int8_t)) {
-		debug("invalid urb! ");
-		return;
-	}
-
-	urb->buffer[0] = urb->device->dfu_state & 0xff;
-	urb->actual_length = sizeof(u_int8_t);
 }
 
 #ifndef CONFIG_USBD_PRODUCTID_DFU
