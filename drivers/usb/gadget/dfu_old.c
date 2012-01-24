@@ -5,8 +5,6 @@
  * based on existing SAM7DFU code from OpenPCD:
  * (C) Copyright 2006 by Harald Welte <hwelte@hmw-consulting.de>
  *
- * FIXME Add copyright for Bernard, add my copyright + LF
- *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -48,13 +46,7 @@ DECLARE_GLOBAL_DATA_PTR; /* FIXME needed? */
 
 #include "../../serial/usbtty.h"			/* for STR_* defs */
 
-#define RET_NOTHING	0
-#define RET_ZLP		1
-#define RET_STALL	2
-
 #define POLL_TIMEOUT_MILLISECONDS 5
-
-volatile enum dfu_state *system_dfu_state; /* for 3rd parties */
 
 
 struct dnload_state {
@@ -736,10 +728,6 @@ int dfu_init_instance(struct usb_device_instance *dev)
 	dev->dfu_state = DFU_STATE_appIDLE;
 	dev->dfu_status = DFU_STATUS_OK;
 
-	if (system_dfu_state)
-		printf("SURPRISE: system_dfu_state is already set\n");
-	system_dfu_state = &dev->dfu_state;
-
 	dfu_init_strings(dev);
 
 	return 0;
@@ -749,30 +737,16 @@ int dfu_init_instance(struct usb_device_instance *dev)
 void dfu_event(struct usb_device_instance *device,
 	       usb_device_event_t event, int data)
 {
-	char *out;
-	static int stdout_switched;
-
 	switch (event) {
 	case DEVICE_RESET:
 		switch (device->dfu_state) {
 		case DFU_STATE_appDETACH:
 			device->dfu_state = DFU_STATE_dfuIDLE;
-			out = getenv("stdout");
-			if (out && !strcmp(out, "usbtty")) {
-				setenv("stdout", "vga");
-				setenv("stderr", "vga");
-				stdout_switched = 1;
-			}
 			printf("DFU: Switching to DFU Mode\n");
 			break;
 		case DFU_STATE_dfuMANIFEST_WAIT_RST:
 			device->dfu_state = DFU_STATE_appIDLE;
 			printf("DFU: Switching back to Runtime mode\n");
-			if (stdout_switched) {
-				setenv("stdout", "usbtty");
-				setenv("stderr", "usbtty");
-				stdout_switched = 0;
-			}
 			break;
 		default:
 			break;

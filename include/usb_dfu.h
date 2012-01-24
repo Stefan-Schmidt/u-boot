@@ -85,7 +85,9 @@ int dfu_init_instance(struct usb_device_instance *dev);
 #define DFU_EP0_ZLP		3
 #define DFU_EP0_DATA		4
 
-extern volatile enum dfu_state *system_dfu_state; /* for 3rd parties */
+#define RET_NOTHING     0
+#define RET_ZLP         1
+#define RET_STALL       2
 
 int dfu_ep0_handler(struct urb *urb);
 
