@@ -289,7 +289,7 @@ static void handle_getstatus(struct usb_request *req)
 	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
 	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
 	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
-	//req->actual = MIN(sizeof(*dstat), max);
+	//req->actual = MIN(sizeof(*dstat), max); /* FIXME: used in the old dfu code */
 }
 
 static void handle_getstate(struct usb_request *req)
