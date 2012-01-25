@@ -226,7 +226,7 @@ static int get_dfu_loadaddr(uint8_t **loadaddr)
 	} else
 		return 0;
 }
-
+#if 0
 static int get_dfu_filesize(unsigned long *filesize)
 {
 	const char *s;
@@ -237,7 +237,7 @@ static int get_dfu_filesize(unsigned long *filesize)
 	} else
 		return 0;
 }
-
+#endif
 static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 			 int first)
 {
@@ -277,12 +277,14 @@ static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 	if (len == 0) {
 		/* cleanup */
 		switch (dev->alternate) {
+#if 0
 			char buf[12];
 		case 0:
 			sprintf(buf, "%x", ds->ptr - ds->buf);
 			setenv("filesize", buf);
 			ds->ptr = ds->buf;
 			break;
+#endif
 		default:
 			rc = 0;
 			if (ds->ptr > ds->buf)
@@ -315,6 +317,7 @@ static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 	}
 
 	switch (dev->alternate) {
+#if 0
 	case 0:
 		if (first) {
 			printf("Starting DFU DOWNLOAD to RAM (0x%p)\n",
@@ -326,6 +329,7 @@ static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 		memcpy(ds->ptr, urb->buffer, len);
 		ds->ptr += len;
 		break;
+#endif
 	default:
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
@@ -375,12 +379,13 @@ static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 	struct usb_device_instance *dev = urb->device;
 	struct dnload_state *ds = &_dnstate;
 	unsigned int remain;
-	uint8_t *loadaddr;
-	unsigned long filesize;
+//	uint8_t *loadaddr;
+//	unsigned long filesize;
 	int rc;
 
 	debug("upload(val=0x%02x, len=%u, first=%u) ", val, len, first);
 
+#if 0
 	if (!get_dfu_loadaddr(&loadaddr) || !get_dfu_filesize(&filesize)) {
 		printf("Error: DFU Upload requires loadaddr and filesize to be "
 			"set.\n");
@@ -388,7 +393,7 @@ static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 		dev->dfu_status = DFU_STATUS_errADDRESS;
 		return -EINVAL;
 	}
-
+#endif
 	if (len > CONFIG_USBD_DFU_XFER_SIZE) {
 		/* Too big */
 		dev->dfu_state = DFU_STATE_dfuERROR;
@@ -398,6 +403,7 @@ static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 	}
 
 	switch (dev->alternate) {
+#if 0
 	case 0:
 		if (first) {
 			printf("Starting DFU Upload of RAM (0x%p)\n", loadaddr);
@@ -412,6 +418,7 @@ static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 		urb->actual_length = len;
 		ds->ptr += len;
 		break;
+#endif
 	default:
 		if (first) {
 			rc = initialize_ds_nand(dev, ds);
