@@ -238,8 +238,7 @@ static int get_dfu_filesize(unsigned long *filesize)
 		return 0;
 }
 #endif
-static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
-			 int first)
+static int handle_nand_dnload(struct urb *urb, u_int16_t len, int first)
 {
 	struct usb_device_instance *dev = urb->device;
 	struct dnload_state *ds = &_dnstate;
@@ -373,8 +372,7 @@ static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 	return RET_ZLP;
 }
 
-static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
-			 int first)
+static int handle_nand_upload(struct urb *urb, u_int16_t len, int first)
 {
 	struct usb_device_instance *dev = urb->device;
 	struct dnload_state *ds = &_dnstate;
@@ -382,8 +380,6 @@ static int handle_nand_upload(struct urb *urb, u_int16_t val, u_int16_t len,
 //	uint8_t *loadaddr;
 //	unsigned long filesize;
 	int rc;
-
-	debug("upload(val=0x%02x, len=%u, first=%u) ", val, len, first);
 
 #if 0
 	if (!get_dfu_loadaddr(&loadaddr) || !get_dfu_filesize(&filesize)) {

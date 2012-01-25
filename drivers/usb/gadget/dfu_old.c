@@ -108,21 +108,19 @@ static void handle_getstate(struct urb *urb, int max)
 	urb->actual_length = sizeof(u_int8_t);
 }
 
-static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
-			 int first)
+static int handle_dnload(struct urb *urb, u_int16_t len, int first)
 {
 	struct usb_device_instance *dev = urb->device;
 
 	if (len == 0)
 		dev->dfu_state = DFU_STATE_dfuMANIFEST_SYNC;
 
-	return handle_nand_dnload(urb, val, len, first);
+	return handle_nand_dnload(urb, len, first);
 }
 
-static int handle_upload(struct urb *urb, u_int16_t val, u_int16_t len,
-			 int first)
+static int handle_upload(struct urb *urb, u_int16_t len, int first)
 {
-	return handle_nand_upload(urb, val, len, first);
+	return handle_nand_upload(urb, len, first);
 }
 
 #ifndef CONFIG_USBD_PRODUCTID_DFU
@@ -167,12 +165,11 @@ int dfu_ep0_handler(struct urb *urb)
 {
 	int rc, ret = RET_NOTHING;
 	u_int8_t req = urb->device_request.bRequest;
-	u_int16_t val = urb->device_request.wValue;
 	u_int16_t len = urb->device_request.wLength;
 	struct usb_device_instance *dev = urb->device;
 
-	debug("dfu_ep0(req=0x%x, val=0x%x, len=%u) old_state = %u ",
-		req, val, len, dev->dfu_state);
+	debug("dfu_ep0(req=0x%x, len=%u) old_state = %u ",
+		req, len, dev->dfu_state);
 
 	switch (dev->dfu_state) {
 	case DFU_STATE_appIDLE:
@@ -218,11 +215,11 @@ int dfu_ep0_handler(struct urb *urb)
 				goto out;
 			}
 			dev->dfu_state = DFU_STATE_dfuDNLOAD_SYNC;
-			ret = handle_dnload(urb, val, len, 1);
+			ret = handle_dnload(urb, len, 1);
 			break;
 		case USB_REQ_DFU_UPLOAD:
 			dev->dfu_state = DFU_STATE_dfuUPLOAD_IDLE;
-			handle_upload(urb, val, len, 1);
+			handle_upload(urb, len, 1);
 			break;
 		case USB_REQ_DFU_ABORT:
 			/* no zlp? */
@@ -283,7 +280,7 @@ int dfu_ep0_handler(struct urb *urb)
 		switch (req) {
 		case USB_REQ_DFU_DNLOAD:
 			dev->dfu_state = DFU_STATE_dfuDNLOAD_SYNC;
-			ret = handle_dnload(urb, val, len, 0);
+			ret = handle_dnload(urb, len, 0);
 			break;
 		case USB_REQ_DFU_ABORT:
 			dev->dfu_state = DFU_STATE_dfuIDLE;
@@ -329,7 +326,7 @@ int dfu_ep0_handler(struct urb *urb)
 		switch (req) {
 		case USB_REQ_DFU_UPLOAD:
 			/* state transition if less data then requested */
-			rc = handle_upload(urb, val, len, 0);
+			rc = handle_upload(urb, len, 0);
 			if (rc >= 0 && rc < len)
 				dev->dfu_state = DFU_STATE_dfuIDLE;
 			break;
