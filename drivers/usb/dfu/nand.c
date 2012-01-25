@@ -275,9 +275,6 @@ static int handle_nand_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 	}
 
 	if (len == 0) {
-		debug("zero-size write -> MANIFEST_SYNC ");
-		dev->dfu_state = DFU_STATE_dfuMANIFEST_SYNC;
-
 		/* cleanup */
 		switch (dev->alternate) {
 			char buf[12];

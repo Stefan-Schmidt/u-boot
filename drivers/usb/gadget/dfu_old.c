@@ -111,6 +111,11 @@ static void handle_getstate(struct urb *urb, int max)
 static int handle_dnload(struct urb *urb, u_int16_t val, u_int16_t len,
 			 int first)
 {
+	struct usb_device_instance *dev = urb->device;
+
+	if (len == 0)
+		dev->dfu_state = DFU_STATE_dfuMANIFEST_SYNC;
+
 	return handle_nand_dnload(urb, val, len, first);
 }
 
