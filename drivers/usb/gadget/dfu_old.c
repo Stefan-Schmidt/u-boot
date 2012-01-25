@@ -97,7 +97,7 @@ static void handle_getstatus(struct urb *urb, int max)
 	 * be done by the original caller! */
 }
 
-static void handle_getstate(struct urb *urb, int max)
+static void handle_getstate(struct urb *urb)
 {
 	if (!urb->buffer || urb->buffer_length < sizeof(u_int8_t)) {
 		debug("invalid urb! ");
@@ -178,7 +178,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		case USB_REQ_DFU_DETACH:
 			dev->dfu_state = DFU_STATE_appDETACH;
@@ -195,7 +195,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_appIDLE;
@@ -229,7 +229,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		case USB_REQ_DFU_DETACH:
 			/* Proprietary extension: 'detach' from idle mode and
@@ -255,7 +255,7 @@ int dfu_ep0_handler(struct urb *urb)
 			 * completeness */
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
@@ -290,7 +290,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
@@ -306,7 +306,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
@@ -339,7 +339,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		default:
 			dev->dfu_state = DFU_STATE_dfuERROR;
@@ -353,7 +353,7 @@ int dfu_ep0_handler(struct urb *urb)
 			handle_getstatus(urb, len);
 			break;
 		case USB_REQ_DFU_GETSTATE:
-			handle_getstate(urb, len);
+			handle_getstate(urb);
 			break;
 		case USB_REQ_DFU_CLRSTATUS:
 			dev->dfu_state = DFU_STATE_dfuIDLE;
