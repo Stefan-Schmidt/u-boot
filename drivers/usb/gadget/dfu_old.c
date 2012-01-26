@@ -208,7 +208,6 @@ int dfu_ep0_handler(struct urb *urb)
 	case DFU_STATE_dfuIDLE:
 		switch (req) {
 		case USB_REQ_DFU_DNLOAD:
-			printf("Got DNLOAD req in dfuIDLE, len = %d\n", len);
 			if (len == 0) {
 				dev->dfu_state = DFU_STATE_dfuERROR;
 				ret = RET_STALL;
