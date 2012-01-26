@@ -449,6 +449,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		switch (ctrl->bRequest) {
 		case USB_REQ_DFU_DNLOAD:
 			dev->dfu_state = DFU_STATE_dfuDNLOAD_SYNC;
+			//ret = handle_dnload(urb, len, 0);
 			return handle_dnload(gadget, len);
 		case USB_REQ_DFU_ABORT:
 			dev->dfu_state = DFU_STATE_dfuIDLE;
@@ -490,6 +491,7 @@ dfu_handle(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		switch (ctrl->bRequest) {
 		case USB_REQ_DFU_UPLOAD:
 			/* state transition if less data then requested */
+			//rc = handle_upload(urb, len, 0);
 			rc = handle_upload(req, len);
 			if (rc >= 0 && rc < len)
 				dev->dfu_state = DFU_STATE_dfuIDLE;
