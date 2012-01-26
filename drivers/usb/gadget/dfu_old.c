@@ -91,7 +91,7 @@ static void handle_getstatus(struct urb *urb, int max)
 	dstat->bwPollTimeout[0] = POLL_TIMEOUT_MILLISECONDS & 0xff;
 	dstat->bwPollTimeout[1] = (POLL_TIMEOUT_MILLISECONDS >> 8) & 0xff;
 	dstat->bwPollTimeout[2] = (POLL_TIMEOUT_MILLISECONDS >> 16) & 0xff;
-	urb->actual_length = MIN(sizeof(*dstat), max);
+	//urb->actual_length = MIN(sizeof(*dstat), max);
 
 	/* we don't need to explicitly send data here, will
 	 * be done by the original caller! */
